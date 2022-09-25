@@ -4,15 +4,11 @@ RUN pip install flask
 
 RUN pip install flask-mysql
 
-RUN pip install flask_cors
-
 RUN mkdir templates
 
-RUN mkdir static
+COPY docker.py /app.py
 
-COPY app.py /app.py
-
-COPY view/*  /view/
+COPY templates/*  /templates/
 
 RUN chmod -R a+rwx templates
 
