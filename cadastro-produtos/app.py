@@ -1,66 +1,43 @@
 import os
-from flask import Flask, render_template, request, json
-from flask_cors import CORS
+from flask import Flask, render_template, request
 from flaskext.mysql import MySQL
 
-
-app = Flask(__name__, template_folder='view')
-CORS(app)
 mysql = MySQL()
+app = Flask(__name__)
 
+# MySQL configurations
 app.config['MYSQL_DATABASE_USER'] = 'root'
-app.config['MYSQL_DATABASE_PASSWORD'] = 'password'
+app.config['MYSQL_DATABASE_PASSWORD'] = '3262253'
 app.config['MYSQL_DATABASE_DB'] = 'teste'
-app.config['MYSQL_DATABASE_HOST'] = 'db'
+app.config['MYSQL_DATABASE_HOST'] = '127.0.0.1'
 mysql.init_app(app)
 
-@app.route('/', methods=['GET'])
+@app.route('/')
 def main():
-    try:
-        return render_template('index.html')
-    except Exception as e:
-        return str(e)
+    return render_template('produtos.html')
 
-@app.route('/gravar', methods=['POST'])
-def storeData():
-    try:
-        coon = mysql.connect()
-        cursor = coon.cursor()
+@app.route('/gravar', methods=['POST','GET'])
+def gravar():
+  nome = request.form['nome']
+  preco = request.form['preco']
+  categoria = request.form['categoria']
+  if nome and preco and categoria:
+    conn = mysql.connect()
+    cursor = conn.cursor()
+    cursor.execute('insert into tbl_user (user_nome, user_preco, user_categoria) VALUES (%s, %s, %s)', (nome, preco, categoria))
+    conn.commit()
+  return render_template('produtos.html')
 
-        _nome = request.form['nome']
-        _preco = request.form['preco']
-        _categoria = request.form['categoria']
-    
-        if _nome and _preco and _categoria:
-            print("Dados para inserir: " + _nome + _preco + _categoria)
-            cursor.execute('insert into tbl_user (user_name, user_preco, user_categoria) VALUES (%s, %s, %s)', (_nome,_preco,_categoria))
-            coon.commit()
-            print("Dados inseridos!")
-        return render_template('index.html')
-        
-    except Exception as e:
-        return json.dumps({'error': str(e)})
-    finally:
-        cursor.close()
 
-@app.route('/listar',methods=['POST','GET'])
-
+@app.route('/listar', methods=['POST','GET'])
 def listar():
-    try:
-            conn = mysql.connect()
-            cursor = conn.cursor()
-            cursor.execute ('select user_name, user_preco, user_categoria from tbl_user')
-            data = cursor.fetchall()
-            print(data);
+  conn = mysql.connect()
+  cursor = conn.cursor()
+  cursor.execute('select user_nome, user_preco, user_categoria from tbl_user')
+  data = cursor.fetchall()
+  conn.commit()
+  return render_template('lista.html', datas=data)
 
-            conn.commit()
-            return render_template('list.html', datas=data)
-
-    except Exception as e:
-        return json.dumps({'error':str(e)})
-    finally:
-        cursor.close()
-
-if __name__ == "__main__":
+if __name__ == "_main_":
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
